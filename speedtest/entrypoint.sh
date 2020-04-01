@@ -1,9 +1,10 @@
 #!/bin/sh
 
 if [ "$1" == "start" ]; then
-    echo "*/${SPEEDTEST_INTERVAL_MINUTES}  *  *  *  *    /sbin/speedtest.sh" > /etc/crontabs/root
+    echo "0  *  *  *  *    /sbin/speedtest.sh" > /etc/crontabs/root
     touch /tmp/speedtest.log
     # Run the first manually
+    sleep 120
     . /sbin/speedtest.sh
     crond -c /etc/crontabs -L /tmp/cron.log
     tail -f /tmp/speedtest.log | jq . &
