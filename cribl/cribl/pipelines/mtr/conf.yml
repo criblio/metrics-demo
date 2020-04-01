@@ -1,0 +1,85 @@
+output: default
+groups: {}
+asyncFuncTimeout: 1000
+functions:
+  - id: serialize
+    filter: report.mtr !== undefined
+    disabled: null
+    conf:
+      type: json
+      dstField: _raw
+      fields: []
+      srcField: report
+  - id: json_unroll
+    filter: report.hubs
+    disabled: null
+    conf:
+      path: hubs
+  - id: serde
+    filter: _raw
+    disabled: null
+    conf:
+      mode: extract
+      srcField: _raw
+      type: json
+  - id: eval
+    filter: "true"
+    disabled: null
+    conf:
+      remove:
+        - report
+        - _raw
+        - count
+        - "'Loss%'"
+      add:
+        - name: hop
+          value: count
+        - name: LossPerc
+          value: __e['Loss%']
+  - id: flatten
+    filter: "true"
+    disabled: null
+    conf:
+      fields:
+        - mtr
+      prefix: ""
+      depth: 5
+      delimiter: _
+  - id: reverse_dns
+    filter: host
+    disabled: null
+    conf:
+      fields:
+        - inFieldName: host
+          outFieldName: host_dns
+      cacheTTL: 60
+  - id: publish_metrics
+    filter: "true"
+    disabled: null
+    conf:
+      fields:
+        - metricType: gauge
+          inFieldName: Avg
+          outFieldExpr: "'mtr.avg'"
+        - metricType: gauge
+          inFieldName: Best
+          outFieldExpr: "'mtr.best'"
+        - metricType: gauge
+          inFieldName: Last
+          outFieldExpr: "'mtr.last'"
+        - metricType: gauge
+          inFieldName: LossPerc
+          outFieldExpr: "'mtr.loss_perc'"
+        - metricType: gauge
+          inFieldName: Snt
+          outFieldExpr: "'mtr.sent'"
+        - metricType: gauge
+          inFieldName: StDev
+          outFieldExpr: "'mtr.stdev'"
+        - metricType: gauge
+          inFieldName: Wrst
+          outFieldExpr: "'mtr.worst'"
+      dimensions:
+        - "!_*"
+        - "*"
+      overwrite: false

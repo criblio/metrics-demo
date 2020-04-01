@@ -1,0 +1,63 @@
+id: default
+routes:
+  - id: A8y30n
+    name: speedtest
+    final: true
+    disabled: false
+    pipeline: speedtest-parse
+    description: ""
+    clones: []
+    filter: client && server && download && upload
+    output: influxdb
+  - id: M6yz8j
+    name: mtr
+    final: true
+    disabled: false
+    pipeline: mtr
+    description: ""
+    clones: []
+    filter: report.mtr
+    output: influxdb
+  - id: A1JddJ
+    name: statsd
+    final: true
+    disabled: false
+    pipeline: statsd
+    description: Aggregate Statsd Metrics
+    clones: []
+    filter: sourcetype=='statsd_ext' || sourcetype=='graphite' || sourcetype=='statsd'
+    output: statsd
+  - id: py0d5r
+    name: Logs to Metrics
+    final: false
+    disabled: false
+    pipeline: logs_to_metrics
+    description: Convert Access Combined Logs to Splunk Metrics
+    clones:
+      - index: cribl-metrics
+    filter: C.vars.accessCombined()
+    output: statsd
+  - id: ZLTc0g
+    name: Enrich
+    final: false
+    disabled: false
+    pipeline: enrich
+    description: Use lookups to add context to events
+    clones:
+      - index: cribl-modified
+        source: enrich
+      - index: cribl-modified
+        source: indextimefields
+    filter: C.vars.accessCombined()
+    output: default
+  - id: OsuFhD
+    name: Main Route
+    final: true
+    disabled: false
+    pipeline: main
+    description: Catchall for routing data through main pipeline
+    clones:
+      - {}
+    filter: "true"
+    output: default
+groups: {}
