@@ -1,0 +1,49 @@
+outputs:
+  statsd:
+    type: router
+    rules:
+      - filter: "false"
+        output: localhost
+        final: false
+      - filter: "true"
+        output: influxdb
+        final: false
+    onBackpressure: drop
+  localhost:
+    type: statsd_ext
+    protocol: udp
+    host: localhost
+    port: 9125
+    mtu: 512
+    flushPeriodSec: 1
+    connectionTimeout: 5000
+    writeTimeout: 10000
+  influxdb:
+    timestampPrecision: ms
+    dynamicValueFieldName: true
+    valueFieldName: value
+    concurrency: 5
+    maxPayloadSizeKB: 4096
+    flushPeriodSec: 1
+    auth:
+      disabled: true
+    type: influxdb
+    url: http://influxdb:8086/write
+    database: cribl
+  default:
+    defaultId: fs
+    type: default
+  fs:
+    partitionExpr: "`${__inputId.replace(/:/g, '_')}/${C.Time.strftime(_time ? _time :
+      Date.now(), '%Y-%m-%d_%H')}/${host}/${sourcetype}`"
+    format: json
+    baseFileName: CriblOut
+    compress: none
+    maxFileSizeMB: 5
+    maxFileOpenTimeSec: 30
+    maxFileIdleTimeSec: 30
+    maxOpenFiles: 100
+    onBackpressure: block
+    type: filesystem
+    destPath: /out
+    stagePath: /tmp/cribl-staging
