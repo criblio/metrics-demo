@@ -14,7 +14,6 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 2,
   "links": [],
   "panels": [{
       "datasource": "InfluxDB",
@@ -317,8 +316,10 @@
               "type": "field"
             },
             {
-              "params": [],
-              "type": "max"
+              "params": [
+                95
+              ],
+              "type": "percentile"
             }
           ]
         ],
@@ -339,7 +340,7 @@
         "text": "N/A",
         "value": "null"
       }],
-      "valueName": "max"
+      "valueName": "avg"
     },
     {
       "cacheTimeout": null,
@@ -427,8 +428,10 @@
               "type": "field"
             },
             {
-              "params": [],
-              "type": "max"
+              "params": [
+                95
+              ],
+              "type": "percentile"
             }
           ]
         ],
@@ -449,7 +452,7 @@
         "text": "N/A",
         "value": "null"
       }],
-      "valueName": "max"
+      "valueName": "avg"
     },
     {
       "cacheTimeout": null,
@@ -537,8 +540,10 @@
               "type": "field"
             },
             {
-              "params": [],
-              "type": "max"
+              "params": [
+                95
+              ],
+              "type": "percentile"
             }
           ]
         ],
@@ -559,7 +564,7 @@
         "text": "N/A",
         "value": "null"
       }],
-      "valueName": "max"
+      "valueName": "avg"
     },
     {
       "cacheTimeout": null,
@@ -647,8 +652,10 @@
               "type": "field"
             },
             {
-              "params": [],
-              "type": "max"
+              "params": [
+                95
+              ],
+              "type": "percentile"
             }
           ]
         ],
@@ -669,13 +676,13 @@
         "text": "N/A",
         "value": "null"
       }],
-      "valueName": "max"
+      "valueName": "avg"
     },
     {
       "cacheTimeout": null,
       "columns": [{
-        "text": "Max",
-        "value": "max"
+        "text": "Avg",
+        "value": "avg"
       }],
       "datasource": "InfluxDB",
       "description": "Packet Loss % by Hop",
@@ -715,7 +722,7 @@
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 2,
           "mappingType": 1,
-          "pattern": "Max",
+          "pattern": "Avg",
           "thresholds": [
             "0.1"
           ],
@@ -1072,7 +1079,7 @@
     "list": []
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {
@@ -1092,5 +1099,5 @@
   "timezone": "",
   "title": "Network Latency and Bandwidth",
   "uid": "YRdDYs9Zk",
-  "version": 1
+  "version": 2
 }
