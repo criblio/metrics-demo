@@ -93,7 +93,7 @@ services:
   speedtest:
     build: ./speedtest
     environment:
-      - SPEEDTEST_INTERVAL_MINUTES=15
+      - SPEEDTEST_INTERVAL_HOURS=8
       - CRIBL_TCPJSON
 volumes:
   ? grafana

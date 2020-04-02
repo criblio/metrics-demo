@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ "$1" == "start" ]; then
-    echo "0  *  *  *  *    /sbin/speedtest.sh" > /etc/crontabs/root
+    echo "0  */${SPEEDTEST_INTERVAL_HOURS}  *  *  *    /sbin/speedtest.sh" > /etc/crontabs/root
     touch /tmp/speedtest.log
     # Run the first manually
     sleep 120

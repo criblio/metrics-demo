@@ -1,16 +1,14 @@
 {
   "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": "-- Grafana --",
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "type": "dashboard"
-      }
-    ]
+    "list": [{
+      "builtIn": 1,
+      "datasource": "-- Grafana --",
+      "enable": true,
+      "hide": true,
+      "iconColor": "rgba(0, 211, 255, 1)",
+      "name": "Annotations & Alerts",
+      "type": "dashboard"
+    }]
   },
   "description": "Latency statistics from MTR, Bandwith from Speedtest.net",
   "editable": true,
@@ -18,8 +16,7 @@
   "graphTooltip": 0,
   "id": 2,
   "links": [],
-  "panels": [
-    {
+  "panels": [{
       "datasource": "InfluxDB",
       "description": "Max latency of any hop",
       "gridPos": {
@@ -39,8 +36,7 @@
             "mappings": [],
             "thresholds": {
               "mode": "absolute",
-              "steps": [
-                {
+              "steps": [{
                   "color": "green",
                   "value": null
                 },
@@ -69,44 +65,40 @@
         "orientation": "auto"
       },
       "pluginVersion": "6.6.2",
-      "targets": [
-        {
-          "groupBy": [
-            {
+      "targets": [{
+        "groupBy": [{
+            "params": [
+              "$__interval"
+            ],
+            "type": "time"
+          },
+          {
+            "params": [
+              "none"
+            ],
+            "type": "fill"
+          }
+        ],
+        "measurement": "mtr",
+        "orderByTime": "ASC",
+        "policy": "default",
+        "refId": "A",
+        "resultFormat": "time_series",
+        "select": [
+          [{
               "params": [
-                "$__interval"
+                "worst"
               ],
-              "type": "time"
+              "type": "field"
             },
             {
-              "params": [
-                "none"
-              ],
-              "type": "fill"
+              "params": [],
+              "type": "max"
             }
-          ],
-          "measurement": "mtr",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "worst"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "max"
-              }
-            ]
-          ],
-          "tags": []
-        }
-      ],
+          ]
+        ],
+        "tags": []
+      }],
       "timeFrom": null,
       "timeShift": null,
       "title": "Worst Latency",
@@ -152,59 +144,53 @@
       "spaceLength": 10,
       "stack": true,
       "steppedLine": false,
-      "targets": [
-        {
-          "alias": "[[tag_hop]]",
-          "groupBy": [
-            {
+      "targets": [{
+        "alias": "[[tag_hop]]",
+        "groupBy": [{
+            "params": [
+              "$__interval"
+            ],
+            "type": "time"
+          },
+          {
+            "params": [
+              "hop"
+            ],
+            "type": "tag"
+          },
+          {
+            "params": [
+              "none"
+            ],
+            "type": "fill"
+          }
+        ],
+        "measurement": "mtr",
+        "orderByTime": "ASC",
+        "policy": "default",
+        "query": "SELECT mean(\"worst\") FROM \"mtr\" WHERE $timeFilter GROUP BY time($__interval), \"hop\" fill(previous)",
+        "rawQuery": false,
+        "refId": "A",
+        "resultFormat": "time_series",
+        "select": [
+          [{
               "params": [
-                "$__interval"
+                "worst"
               ],
-              "type": "time"
+              "type": "field"
             },
             {
-              "params": [
-                "hop"
-              ],
-              "type": "tag"
-            },
-            {
-              "params": [
-                "none"
-              ],
-              "type": "fill"
-            }
-          ],
-          "measurement": "mtr",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "SELECT mean(\"worst\") FROM \"mtr\" WHERE $timeFilter GROUP BY time($__interval), \"hop\" fill(previous)",
-          "rawQuery": false,
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "worst"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "max"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "hop",
-              "operator": "<>",
-              "value": "10"
+              "params": [],
+              "type": "max"
             }
           ]
-        }
-      ],
+        ],
+        "tags": [{
+          "key": "hop",
+          "operator": "<>",
+          "value": "10"
+        }]
+      }],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
@@ -223,8 +209,7 @@
         "show": true,
         "values": []
       },
-      "yaxes": [
-        {
+      "yaxes": [{
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -274,8 +259,7 @@
       "interval": null,
       "links": [],
       "mappingType": 1,
-      "mappingTypes": [
-        {
+      "mappingTypes": [{
           "name": "value to text",
           "value": 1
         },
@@ -292,13 +276,11 @@
       "postfixFontSize": "50%",
       "prefix": "",
       "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
+      "rangeMaps": [{
+        "from": "null",
+        "text": "N/A",
+        "to": "null"
+      }],
       "sparkline": {
         "fillColor": "rgba(31, 118, 189, 0.18)",
         "full": false,
@@ -308,63 +290,55 @@
         "ymin": null
       },
       "tableColumn": "",
-      "targets": [
-        {
-          "groupBy": [
-            {
+      "targets": [{
+        "groupBy": [{
+            "params": [
+              "$__interval"
+            ],
+            "type": "time"
+          },
+          {
+            "params": [
+              "null"
+            ],
+            "type": "fill"
+          }
+        ],
+        "measurement": "mtr",
+        "orderByTime": "ASC",
+        "policy": "default",
+        "refId": "A",
+        "resultFormat": "time_series",
+        "select": [
+          [{
               "params": [
-                "$__interval"
+                "loss_perc"
               ],
-              "type": "time"
+              "type": "field"
             },
             {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "measurement": "mtr",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "loss_perc"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "max"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "hop",
-              "operator": "=",
-              "value": "1"
+              "params": [],
+              "type": "max"
             }
           ]
-        }
-      ],
+        ],
+        "tags": [{
+          "key": "hop",
+          "operator": "=",
+          "value": "1"
+        }]
+      }],
       "thresholds": "1",
       "timeFrom": null,
       "timeShift": null,
       "title": "Hop 1 Loss %",
       "type": "singlestat",
       "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
+      "valueMaps": [{
+        "op": "=",
+        "text": "N/A",
+        "value": "null"
+      }],
       "valueName": "max"
     },
     {
@@ -395,8 +369,7 @@
       "interval": null,
       "links": [],
       "mappingType": 1,
-      "mappingTypes": [
-        {
+      "mappingTypes": [{
           "name": "value to text",
           "value": 1
         },
@@ -413,13 +386,11 @@
       "postfixFontSize": "50%",
       "prefix": "",
       "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
+      "rangeMaps": [{
+        "from": "null",
+        "text": "N/A",
+        "to": "null"
+      }],
       "sparkline": {
         "fillColor": "rgba(31, 118, 189, 0.18)",
         "full": false,
@@ -429,63 +400,55 @@
         "ymin": null
       },
       "tableColumn": "",
-      "targets": [
-        {
-          "groupBy": [
-            {
+      "targets": [{
+        "groupBy": [{
+            "params": [
+              "$__interval"
+            ],
+            "type": "time"
+          },
+          {
+            "params": [
+              "null"
+            ],
+            "type": "fill"
+          }
+        ],
+        "measurement": "mtr",
+        "orderByTime": "ASC",
+        "policy": "default",
+        "refId": "A",
+        "resultFormat": "time_series",
+        "select": [
+          [{
               "params": [
-                "$__interval"
+                "loss_perc"
               ],
-              "type": "time"
+              "type": "field"
             },
             {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "measurement": "mtr",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "loss_perc"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "max"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "hop",
-              "operator": "=",
-              "value": "2"
+              "params": [],
+              "type": "max"
             }
           ]
-        }
-      ],
+        ],
+        "tags": [{
+          "key": "hop",
+          "operator": "=",
+          "value": "2"
+        }]
+      }],
       "thresholds": "1",
       "timeFrom": null,
       "timeShift": null,
       "title": "Hop 2 Loss %",
       "type": "singlestat",
       "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
+      "valueMaps": [{
+        "op": "=",
+        "text": "N/A",
+        "value": "null"
+      }],
       "valueName": "max"
     },
     {
@@ -516,8 +479,7 @@
       "interval": null,
       "links": [],
       "mappingType": 1,
-      "mappingTypes": [
-        {
+      "mappingTypes": [{
           "name": "value to text",
           "value": 1
         },
@@ -534,13 +496,11 @@
       "postfixFontSize": "50%",
       "prefix": "",
       "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
+      "rangeMaps": [{
+        "from": "null",
+        "text": "N/A",
+        "to": "null"
+      }],
       "sparkline": {
         "fillColor": "rgba(31, 118, 189, 0.18)",
         "full": false,
@@ -550,63 +510,55 @@
         "ymin": null
       },
       "tableColumn": "",
-      "targets": [
-        {
-          "groupBy": [
-            {
+      "targets": [{
+        "groupBy": [{
+            "params": [
+              "$__interval"
+            ],
+            "type": "time"
+          },
+          {
+            "params": [
+              "null"
+            ],
+            "type": "fill"
+          }
+        ],
+        "measurement": "mtr",
+        "orderByTime": "ASC",
+        "policy": "default",
+        "refId": "A",
+        "resultFormat": "time_series",
+        "select": [
+          [{
               "params": [
-                "$__interval"
+                "loss_perc"
               ],
-              "type": "time"
+              "type": "field"
             },
             {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "measurement": "mtr",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "loss_perc"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "max"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "hop",
-              "operator": "=",
-              "value": "3"
+              "params": [],
+              "type": "max"
             }
           ]
-        }
-      ],
+        ],
+        "tags": [{
+          "key": "hop",
+          "operator": "=",
+          "value": "3"
+        }]
+      }],
       "thresholds": "1",
       "timeFrom": null,
       "timeShift": null,
       "title": "Hop 3 Loss %",
       "type": "singlestat",
       "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
+      "valueMaps": [{
+        "op": "=",
+        "text": "N/A",
+        "value": "null"
+      }],
       "valueName": "max"
     },
     {
@@ -637,8 +589,7 @@
       "interval": null,
       "links": [],
       "mappingType": 1,
-      "mappingTypes": [
-        {
+      "mappingTypes": [{
           "name": "value to text",
           "value": 1
         },
@@ -655,13 +606,11 @@
       "postfixFontSize": "50%",
       "prefix": "",
       "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
+      "rangeMaps": [{
+        "from": "null",
+        "text": "N/A",
+        "to": "null"
+      }],
       "sparkline": {
         "fillColor": "rgba(31, 118, 189, 0.18)",
         "full": false,
@@ -671,73 +620,63 @@
         "ymin": null
       },
       "tableColumn": "",
-      "targets": [
-        {
-          "groupBy": [
-            {
+      "targets": [{
+        "groupBy": [{
+            "params": [
+              "$__interval"
+            ],
+            "type": "time"
+          },
+          {
+            "params": [
+              "null"
+            ],
+            "type": "fill"
+          }
+        ],
+        "measurement": "mtr",
+        "orderByTime": "ASC",
+        "policy": "default",
+        "refId": "A",
+        "resultFormat": "time_series",
+        "select": [
+          [{
               "params": [
-                "$__interval"
+                "loss_perc"
               ],
-              "type": "time"
+              "type": "field"
             },
             {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "measurement": "mtr",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "loss_perc"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "max"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "hop",
-              "operator": "=",
-              "value": "4"
+              "params": [],
+              "type": "max"
             }
           ]
-        }
-      ],
+        ],
+        "tags": [{
+          "key": "hop",
+          "operator": "=",
+          "value": "4"
+        }]
+      }],
       "thresholds": "1",
       "timeFrom": null,
       "timeShift": null,
       "title": "Hop 4 Loss %",
       "type": "singlestat",
       "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
+      "valueMaps": [{
+        "op": "=",
+        "text": "N/A",
+        "value": "null"
+      }],
       "valueName": "max"
     },
     {
       "cacheTimeout": null,
-      "columns": [
-        {
-          "text": "Max",
-          "value": "max"
-        }
-      ],
+      "columns": [{
+        "text": "Max",
+        "value": "max"
+      }],
       "datasource": "InfluxDB",
       "description": "Packet Loss % by Hop",
       "fontSize": "100%",
@@ -757,8 +696,7 @@
         "col": 0,
         "desc": false
       },
-      "styles": [
-        {
+      "styles": [{
           "alias": "Time",
           "align": "auto",
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
@@ -785,44 +723,39 @@
           "unit": "short"
         }
       ],
-      "targets": [
-        {
-          "alias": "[[tag_hop]] -- [[tag_host]]",
-          "groupBy": [
-            {
-              "params": [
-                "host"
-              ],
-              "type": "tag"
-            },
-            {
-              "params": [
-                "hop"
-              ],
-              "type": "tag"
-            }
-          ],
-          "hide": false,
-          "measurement": "mtr",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "SELECT max(\"loss_perc\") FROM \"mtr\" WHERE $timeFilter GROUP BY \"host\"",
-          "rawQuery": false,
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "loss_perc"
-                ],
-                "type": "field"
-              }
-            ]
-          ],
-          "tags": []
-        }
-      ],
+      "targets": [{
+        "alias": "[[tag_hop]] -- [[tag_host]]",
+        "groupBy": [{
+            "params": [
+              "host"
+            ],
+            "type": "tag"
+          },
+          {
+            "params": [
+              "hop"
+            ],
+            "type": "tag"
+          }
+        ],
+        "hide": false,
+        "measurement": "mtr",
+        "orderByTime": "ASC",
+        "policy": "default",
+        "query": "SELECT max(\"loss_perc\") FROM \"mtr\" WHERE $timeFilter GROUP BY \"host\"",
+        "rawQuery": false,
+        "refId": "A",
+        "resultFormat": "time_series",
+        "select": [
+          [{
+            "params": [
+              "loss_perc"
+            ],
+            "type": "field"
+          }]
+        ],
+        "tags": []
+      }],
       "timeFrom": null,
       "timeShift": null,
       "title": "Loss % by hop",
@@ -869,59 +802,53 @@
       "spaceLength": 10,
       "stack": true,
       "steppedLine": false,
-      "targets": [
-        {
-          "alias": "[[tag_hop]]",
-          "groupBy": [
-            {
+      "targets": [{
+        "alias": "[[tag_hop]]",
+        "groupBy": [{
+            "params": [
+              "$__interval"
+            ],
+            "type": "time"
+          },
+          {
+            "params": [
+              "hop"
+            ],
+            "type": "tag"
+          },
+          {
+            "params": [
+              "none"
+            ],
+            "type": "fill"
+          }
+        ],
+        "measurement": "mtr",
+        "orderByTime": "ASC",
+        "policy": "default",
+        "query": "SELECT mean(\"worst\") FROM \"mtr\" WHERE $timeFilter GROUP BY time($__interval), \"hop\" fill(previous)",
+        "rawQuery": false,
+        "refId": "A",
+        "resultFormat": "time_series",
+        "select": [
+          [{
               "params": [
-                "$__interval"
+                "stdev"
               ],
-              "type": "time"
+              "type": "field"
             },
             {
-              "params": [
-                "hop"
-              ],
-              "type": "tag"
-            },
-            {
-              "params": [
-                "none"
-              ],
-              "type": "fill"
-            }
-          ],
-          "measurement": "mtr",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "SELECT mean(\"worst\") FROM \"mtr\" WHERE $timeFilter GROUP BY time($__interval), \"hop\" fill(previous)",
-          "rawQuery": false,
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "stdev"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "max"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "hop",
-              "operator": "<>",
-              "value": "10"
+              "params": [],
+              "type": "max"
             }
           ]
-        }
-      ],
+        ],
+        "tags": [{
+          "key": "hop",
+          "operator": "<>",
+          "value": "10"
+        }]
+      }],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
@@ -940,8 +867,7 @@
         "show": true,
         "values": []
       },
-      "yaxes": [
-        {
+      "yaxes": [{
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -973,20 +899,29 @@
         "y": 22
       },
       "id": 15,
+      "links": [],
       "options": {
-        "colorMode": "value",
         "fieldOptions": {
           "calcs": [
             "last"
           ],
           "defaults": {
             "mappings": [],
+            "max": 409600000,
+            "min": 1024000,
             "thresholds": {
               "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
+              "steps": [{
+                  "color": "dark-red",
                   "value": null
+                },
+                {
+                  "color": "#EAB839",
+                  "value": 150000000
+                },
+                {
+                  "color": "dark-green",
+                  "value": 250000000
                 }
               ]
             },
@@ -995,78 +930,83 @@
           "overrides": [],
           "values": false
         },
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto"
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
       "pluginVersion": "6.6.2",
-      "targets": [
-        {
-          "groupBy": [
-            {
+      "targets": [{
+        "groupBy": [{
+            "params": [
+              "$__interval"
+            ],
+            "type": "time"
+          },
+          {
+            "params": [
+              "none"
+            ],
+            "type": "fill"
+          }
+        ],
+        "measurement": "speedtest",
+        "orderByTime": "ASC",
+        "policy": "default",
+        "refId": "A",
+        "resultFormat": "time_series",
+        "select": [
+          [{
               "params": [
-                "$__interval"
+                "download"
               ],
-              "type": "time"
+              "type": "field"
             },
             {
-              "params": [
-                "none"
-              ],
-              "type": "fill"
+              "params": [],
+              "type": "mean"
             }
-          ],
-          "measurement": "speedtest",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "download"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": []
-        }
-      ],
-      "timeFrom": null,
+          ]
+        ],
+        "tags": []
+      }],
+      "timeFrom": "24h",
       "timeShift": null,
       "title": "Download Bandwidth",
-      "type": "stat"
+      "type": "gauge"
     },
     {
       "datasource": "InfluxDB",
-      "description": "From Speedtest, current upload bandwidth",
+      "description": "From Speedtest, current download bandwidth",
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
         "y": 22
       },
-      "id": 16,
+      "id": 17,
+      "links": [],
       "options": {
-        "colorMode": "value",
         "fieldOptions": {
           "calcs": [
             "last"
           ],
           "defaults": {
             "mappings": [],
+            "max": 31457280,
+            "min": 256000,
             "thresholds": {
               "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
+              "steps": [{
+                  "color": "dark-red",
                   "value": null
+                },
+                {
+                  "color": "#EAB839",
+                  "value": 5242880
+                },
+                {
+                  "color": "dark-green",
+                  "value": 10485760
                 }
               ]
             },
@@ -1075,53 +1015,49 @@
           "overrides": [],
           "values": false
         },
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto"
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
       "pluginVersion": "6.6.2",
-      "targets": [
-        {
-          "groupBy": [
-            {
+      "targets": [{
+        "groupBy": [{
+            "params": [
+              "$__interval"
+            ],
+            "type": "time"
+          },
+          {
+            "params": [
+              "none"
+            ],
+            "type": "fill"
+          }
+        ],
+        "measurement": "speedtest",
+        "orderByTime": "ASC",
+        "policy": "default",
+        "refId": "A",
+        "resultFormat": "time_series",
+        "select": [
+          [{
               "params": [
-                "$__interval"
+                "upload"
               ],
-              "type": "time"
+              "type": "field"
             },
             {
-              "params": [
-                "none"
-              ],
-              "type": "fill"
+              "params": [],
+              "type": "mean"
             }
-          ],
-          "measurement": "speedtest",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "upload"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": []
-        }
-      ],
-      "timeFrom": null,
+          ]
+        ],
+        "tags": []
+      }],
+      "timeFrom": "24h",
       "timeShift": null,
-      "title": "Upload",
-      "type": "stat"
+      "title": "Download Bandwidth",
+      "type": "gauge"
     }
   ],
   "refresh": "1m",
