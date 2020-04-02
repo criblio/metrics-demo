@@ -1,10 +1,4 @@
-# Cribl Training Repo
-
-Instructions to be placed here
-
-# Built From Demo
-
-This repo is built automatically from the [Cribl Demo Repo](https://github.com/criblio/cribl-demo). Changes need to be made there.# Metrics Demo
+# Metrics Demo
 
 This scenario adds support for metrics use cases to the LogStream demo. We open a metrics input on dogstatsd and graphite protocols. We add pipelines for processing that data. We add pipelines for processing weblog data, aggregating it into metric events and then outputting to Influxdb. This scenario also adds InfluxDB as a datastore and Grafana as a visualization engine.
 
@@ -17,6 +11,8 @@ This scenario adds support for metrics use cases to the LogStream demo. We open 
 
 
 ## Network monitoring notable URLs
+| Description                | URL                                                                                                    | Username | Password  |
+|----------------------------|--------------------------------------------------------------------------------------------------------|----------|-----------|
 | MTR Pipeline               | http://localhost:9000/pipelines/mtr                                                                    | admin    | cribldemo |
 | Logs To Metrics Pipeline   | http://localhost:9000/pipelines/logs_to_metrics                                                        | admin    | cribldemo |
 
