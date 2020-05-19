@@ -1,0 +1,25 @@
+id: default
+routes:
+  - id: py0d5r
+    name: Logs to Metrics
+    final: false
+    disabled: false
+    pipeline: logs_to_metrics
+    description: Convert Access Combined Logs to Splunk Metrics
+    clones:
+      - index: cribl-metrics
+    filter: C.vars.accessCombined()
+    output: statsd
+  - id: ZLTc0g
+    name: Enrich
+    final: false
+    disabled: false
+    pipeline: enrich
+    description: Use lookups to add context to events
+    clones:
+      - index: cribl-modified
+        source: enrich
+      - index: cribl-modified
+        source: indextimefields
+    filter: C.vars.accessCombined()
+    output: default
