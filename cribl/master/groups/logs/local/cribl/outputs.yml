@@ -8,7 +8,7 @@ outputs:
       - filter: "true"
         output: influxdb
         final: false
-    onBackpressure: drop
+    onBackpressure: block
   localhost:
     type: statsd_ext
     protocol: udp
@@ -30,7 +30,7 @@ outputs:
     type: influxdb
     url: http://influxdb:8086/write
     database: cribl
-    onBackpressure: drop
+    onBackpressure: block
   default:
     defaultId: fs
     type: default
