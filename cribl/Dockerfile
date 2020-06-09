@@ -1,1 +1,0 @@
-FROM cribl/cribl:latest
