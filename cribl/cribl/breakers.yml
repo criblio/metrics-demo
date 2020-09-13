@@ -1,0 +1,15 @@
+Cribl Command:
+  lib: custom
+  description: Break up events from shellmetrics
+  rules:
+    - condition: "true"
+      type: regex
+      timestampAnchorRegex: /^/
+      timestamp:
+        type: auto
+        length: 150
+      timestampTimezone: local
+      maxEventBytes: 51200
+      eventBreakerRegex: /(?=\*\*\*CRIBL\*\*\*)/
+      fields: []
+      name: Cribl Special Events

@@ -1,0 +1,147 @@
+docker_shellmetrics:
+  type: collection
+  ttl: 4h
+  removeFields: []
+  resumeOnBoot: false
+  schedule:
+    cronSchedule: "*/10 * * * * *"
+    skippable: true
+    maxConcurrentRuns: 1
+    run:
+      mode: run
+      timeRangeType: absolute
+      expression: "true"
+      logLevel: info
+      minTaskSize: 1MB
+      maxTaskSize: 10MB
+    enabled: true
+  collector:
+    conf:
+      shell: /bin/bash
+      discoverScript: docker ps --format {{.ID}},{{.Names}}
+      collectScript: >-
+        #!/bin/sh
+
+
+        container_id=$(echo $CRIBL_COLLECT_ARG | cut -d , -f 1)
+
+        container_name=$(echo $CRIBL_COLLECT_ARG | cut -d , -f 2)
+
+
+        run() {
+            _out="***CRIBL*** command=${2}"
+            if [ -n "${3}" ]; then
+                _out="${_out} commver=${3}"
+            fi
+            _out="${_out} host=${container_name} container_id=${container_id}"
+
+
+            OLDIFS=${IFS}
+            IFS=
+            _cmdout=$(eval $1 2>/dev/null)
+            _out=$(printf '%s\n%s\n' "${_out}" "${_cmdout}")
+            echo ${_out}
+            IFS=${OLDIFS}
+        }
+
+
+        run "df -TP" "df" "kilobytes"
+
+        run "df -TPi" "df" "inodes"
+
+        run "cat /proc/diskstats" "cat_proc_diskstats"
+
+        run "cat /proc/stat && sleep 1 && cat /proc/stat" "cat_proc_stat" 
+
+        run "cat /proc/meminfo" "cat_proc_meminfo"
+
+        run "cat /proc/vmstat" "cat_proc_vmstat"
+
+        run "cat /proc/loadavg" "cat_proc_loadavg"
+
+        # run "find /proc -maxdepth 2 -name 'stat' -regex '/proc/[0-9]+/stat' -exec cat {} \; 2>/dev/null" "cat_proc_n_stats"
+
+        run "cat /proc/**/stat" "cat_proc_n_stats"
+
+        run "cat /proc/net/snmp" "cat_proc_net_snmp"
+
+        run "cat /proc/net/dev" "cat_proc_net_dev"
+
+        run "cat /proc/net/tcp" "cat_proc_net_tcp"
+
+        run "cat /proc/net/tcp6" "cat_proc_net_tcp6"
+
+        run "cat /proc/net/udp" "cat_proc_net_udp"
+
+        run "cat /proc/net/udp6" "cat_proc_net_udp6"
+    destructive: false
+    type: script
+  input:
+    type: collection
+    staleChannelFlushMs: 10000
+    sendToRoutes: true
+    preprocess:
+      disabled: true
+    breakerRulesets:
+      - Cribl Command
+mtr:
+  type: collection
+  ttl: 4h
+  schedule:
+    cronSchedule: "*/1 * * * *"
+    skippable: true
+    run:
+      mode: run
+      timeRangeType: absolute
+      expression: "true"
+      logLevel: info
+      minTaskSize: 3MB
+      maxTaskSize: 1GB
+      discoverToRoutes: false
+    enabled: true
+  collector:
+    conf:
+      shell: /bin/bash
+      discoverScript: echo mtr
+      collectScript: mtr --report -c 5 -i 1 --json --no-dns 1.1.1.1 | jq -M -c .
+    destructive: false
+    type: script
+  input:
+    type: collection
+    staleChannelFlushMs: 10000
+    sendToRoutes: true
+    preprocess:
+      disabled: true
+    output: influx
+    breakerRulesets:
+      - Cribl
+speedtest:
+  type: collection
+  ttl: 4h
+  schedule:
+    cronSchedule: "* */4 * * *"
+    skippable: true
+    run:
+      mode: run
+      timeRangeType: absolute
+      expression: "true"
+      logLevel: info
+      minTaskSize: 3MB
+      maxTaskSize: 1GB
+      discoverToRoutes: false
+    enabled: true
+  collector:
+    conf:
+      shell: /bin/bash
+      discoverScript: echo "speedtest"
+      collectScript: speedtest --json
+    destructive: false
+    type: script
+  input:
+    type: collection
+    staleChannelFlushMs: 10000
+    sendToRoutes: true
+    preprocess:
+      disabled: true
+    breakerRulesets:
+      - Cribl

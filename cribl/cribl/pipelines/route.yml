@@ -27,6 +27,15 @@ routes:
     clones: []
     filter: sourcetype=='statsd_ext' || sourcetype=='graphite' || sourcetype=='statsd'
     output: statsd
+  - id: xa51Ii
+    name: shellagent
+    final: true
+    disabled: false
+    pipeline: shellagent-parse
+    description: Shellagent Output
+    clones: []
+    filter: _raw.startsWith('***CRIBL***')
+    output: statsd
   - id: py0d5r
     name: Logs to Metrics
     final: false
