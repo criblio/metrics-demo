@@ -105,7 +105,7 @@ functions:
     filter: "true"
     disabled: false
     conf:
-      urlExpression: "`http://apiserver:3000/users/${userName}`"
+      urlExpression: "`http://apiserver:4000/users/${userName}`"
       eventField: customer
       maxConcurrentRequests: 1
       retryOnError: true

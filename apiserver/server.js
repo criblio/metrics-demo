@@ -28,7 +28,7 @@ customerLines.split('\n').forEach((l, idx) => {
 const express = require('express');
 const morgan = require('morgan');
 const app = express();
-const port = 3000;
+const port = 4000;
 
 app.on('error', (err) => {
   console.error(err);
