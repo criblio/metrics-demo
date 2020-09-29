@@ -16,6 +16,7 @@ services:
     volumes:
       - ./cribl/cribl:/opt/cribl/local/cribl
       - ./cribl/data:/opt/cribl/data
+      - /var/run/docker.sock:/var/run/docker.sock
   gogen-accesscombined-forwarder:
     build:
       context: universalforwarder
@@ -34,14 +35,14 @@ services:
     volumes:
       - ./data:/opt/data
     ports:
-      - 3000:3000
+      - 4000:4000
     restart: always
     ulimits:
       nofile:
         soft: 512
         hard: 1024
     healthcheck:
-      test: curl --fail -s http://localhost:3000/ || exit 1
+      test: curl --fail -s http://localhost:4000/ || exit 1
       interval: 15s
       timeout: 10s
       retries: 3
@@ -66,7 +67,7 @@ services:
   grafana:
     image: grafana/grafana
     ports:
-      - 8200:3000
+      - 3000:3000
     volumes:
       - ./grafana:/etc/grafana/provisioning
       - grafana:/var/lib/grafana
@@ -85,16 +86,11 @@ services:
       - ./prometheus/:/etc/prometheus/
     ports:
       - 9090:9090
-  mtr:
-    build: ./mtr
+  cribl-w1:
     environment:
-      - PING_HOST=8.8.8.8
-      - CRIBL_TCPJSON
-  speedtest:
-    build: ./speedtest
-    environment:
-      - SPEEDTEST_INTERVAL_HOURS=8
-      - CRIBL_TCPJSON
+      - CRIBL_AFTER_START_CMD_1=apt-get update && apt-get install -y
+        --no-install-recommends mtr python python-pip
+      - CRIBL_AFTER_START_CMD_2=pip install speedtest-cli
 volumes:
   ? grafana
   ? influxdb

@@ -1,0 +1,1262 @@
+output: default
+groups:
+  jNjqie:
+    name: /proc/net/snmp
+    description: Parse /proc/net/snmp
+    index: 14
+asyncFuncTimeout: 1000
+functions:
+  - id: regex_extract
+    filter: "true"
+    disabled: null
+    conf:
+      source: _raw
+      iterations: 100
+      regex: /(?<__hasMetadata>\*\*\*CRIBL\*\*\*)\s+(?<__shellagent_kv>[^\n]+)\n/
+  - id: serde
+    filter: __shellagent_kv
+    disabled: null
+    conf:
+      mode: extract
+      type: kvp
+      srcField: __shellagent_kv
+  - id: mask
+    filter: __hasMetadata
+    disabled: null
+    conf:
+      rules:
+        - matchRegex: /[^\n]+\n([^$]*)/
+          replaceExpr: g1
+      fields:
+        - _raw
+  - id: unroll
+    filter: command=='df' || command=='cat_proc_diskstats' ||
+      command=='cat_proc_n_stats' || command=='cat_proc_net_dev' ||
+      command.match(/cat_proc_net_(?:tcp|udp)/)
+    disabled: null
+    conf:
+      srcExpr: _raw.split('\n')
+      dstField: _raw
+  - id: drop
+    filter: _raw.length==0 || _raw=='0' || _raw==0 || _raw.match(/Filesystem\s+/) ||
+      _raw.match(/^\s*Inter-/) || _raw.match(/^\s*face\s*/) ||
+      _raw.match(/\s*sl\s+local_address/)
+    disabled: null
+    conf: {}
+  - id: drop
+    filter: command!='cat_proc_n_stats'
+    disabled: true
+    conf: {}
+  - id: regex_extract
+    filter: command=='df' && commver=='kilobytes'
+    disabled: false
+    conf:
+      source: _raw
+      iterations: 100
+      regex: /(?<device>\S+)\s+(?<fstype>\S+)\s+(?<total>\S+)\s+(?<used>\S+)\s+(?<free>\S+)\s+(?<used_percent>\d+)%\s+(?<path>\S+)/
+    description: Extract DF output as kilobytes
+  - id: regex_extract
+    filter: command=='df' && commver=='inodes'
+    disabled: false
+    conf:
+      source: _raw
+      iterations: 100
+      regex: /(?<device>\S+)\s+(?<fstype>\S+)\s+(?<inodes_total>\S+)\s+(?<inodes_used>\S+)\s+(?<inodes_free>\S+)\s+(?<inodes_used_percent>\d+)%\s+(?<path>\S+)/
+    description: Extract DF output as inodes
+  - id: regex_extract
+    filter: command=='cat_proc_stat'
+    disabled: false
+    conf:
+      source: _raw
+      iterations: 100
+      overwrite: false
+      regex: /intr\s+(?<interrupts>\d+).+\nctxt\s+(?<context_switches>\d+)\nbtime\s+(?<boot_time>\d+)\nprocesses\s+(?<processes>\d+)\nprocs_running\s+(?<procs_running>\d+)\nprocs_blocked\s+(?<procs_blocked>\d+)\n/m
+      regexList:
+        - regex: /cpu\s+(?<cpu_user>\d+)\s+(?<cpu_nice>\d+)\s+(?<cpu_system>\d+)\s+(?<cpu_idle>\d+)\s+(?<cpu_iowait>\d+)\s+(?<cpu_irq>\d+)\s+(?<cpu_softirq>\d+)\s+(?<cpu_steal>\d+)\s+(?<cpu_guest>\d+)\s+(?<cpu_guest_nice>\d+)/gm
+    description: Parse /proc/stat output
+  - id: regex_extract
+    filter: command=='cat_proc_diskstats'
+    disabled: false
+    conf:
+      source: _raw
+      iterations: 100
+      regex: /\s*\d+\s+\d+\s+(?<name>\S+)\s+(?<reads>\d+)\s+(?<merged_reads>\d+)\s+(?<sectors_read>\d+)\s+(?<read_time>\d+)\s+(?<writes>\d+)\s+(?<merged_writes>\d+)\s+(?<sectors_written>\d+)\s+(?<write_time>\d+)\s+(?<iops_in_progress>\d+)\s+(?<io_time>\d+)\s+(?<weighted_io_time>\d+)/
+  - id: regex_extract
+    filter: command=='cat_proc_meminfo'
+    disabled: null
+    conf:
+      source: _raw
+      iterations: 100
+      overwrite: false
+      regex: /^\s*(?<_NAME_0>[^:]+):\s+(?<_VALUE_0>\d+)/gm
+      fieldNameExpression: "`__${name}`"
+    description: Parse out put of /proc/meminfo
+  - id: regex_extract
+    filter: command=='cat_proc_vmstat'
+    disabled: null
+    conf:
+      source: _raw
+      iterations: 100
+      overwrite: false
+      regex: /pswpin\s+(?<swap_in>\d+)[\r\n]pswpout\s+(?<swap_out>\d+)/
+    description: Parse contents of /proc/vmstat
+  - id: regex_extract
+    filter: command=='cat_proc_loadavg'
+    disabled: null
+    conf:
+      source: _raw
+      iterations: 100
+      overwrite: false
+      regex: /(?<load1>[\d.]+)\s+(?<load5>[\d.]+)\s+(?<load15>[\d.]+)/
+    description: Parse contents of /proc/loadavg
+  - id: regex_extract
+    filter: command=='cat_proc_n_stats'
+    disabled: null
+    conf:
+      source: _raw
+      iterations: 100
+      overwrite: false
+      regex: /^\d+\s+\S+\s+(?<state>\S+)(?:\s+\S+){16}\s(?<threads>\d+)/gm
+    description: Parse /proc/pid/stat output
+  - id: regex_extract
+    filter: command=='cat_proc_net_snmp'
+    disabled: null
+    conf:
+      source: _raw
+      iterations: 100
+      overwrite: false
+      regex: /Ip:\s(?<__Ip>[^\n]+)\n(?=Icmp:)/
+      regexList:
+        - regex: /Icmp:\s(?<__Icmp>[^\n]+)\n(?=IcmpMsg:)/
+        - regex: /Tcp:\s(?<__Tcp>[^\n]+)\n(?=Udp:)/
+        - regex: /Udp:\s(?<__Udp>[^\n]+)\n(?=UdpLite:)/
+        - regex: /UdpLite:\s(?<__UdpLite>[^\n]+)\n$/
+    description: Parse contents of /proc/net/snmp
+    groupId: jNjqie
+  - id: serde
+    filter: command=='cat_proc_net_snmp' && __Ip
+    disabled: null
+    conf:
+      mode: extract
+      type: delim
+      delimChar: " "
+      quoteChar: '"'
+      escapeChar: \
+      nullValue: "-"
+      srcField: __Ip
+      fields:
+        - ip_forwarding
+        - ip_defaultttl
+        - ip_inreceives
+        - ip_inhdrerrors
+        - ip_inaddrerrors
+        - ip_forwdatagrams
+        - ip_inunknownprotos
+        - ip_indiscards
+        - ip_indelivers
+        - ip_outrequests
+        - ip_outdiscards
+        - ip_outnoroutes
+        - ip_reasmtimeout
+        - ip_reasmreqds
+        - ip_reasmoks
+        - ip_reasmfails
+        - ip_fragoks
+        - ip_fragfails
+        - ip_fragcreates
+    description: Parse IP Row from /proc/net/snmp
+    groupId: jNjqie
+  - id: serde
+    filter: command=='cat_proc_net_snmp' && __Icmp
+    disabled: null
+    conf:
+      mode: extract
+      type: delim
+      delimChar: " "
+      quoteChar: '"'
+      escapeChar: \
+      nullValue: "-"
+      srcField: __Icmp
+      fields:
+        - icmp_inmsgs
+        - icmp_inerrors
+        - icmp_incsumerrors
+        - icmp_indestunreachs
+        - icmp_intimeexcds
+        - icmp_inparmprobs
+        - icmp_insrcquenchs
+        - icmp_inredirects
+        - icmp_inechos
+        - icmp_inechoreps
+        - icmp_intimestamps
+        - icmp_intimestampreps
+        - icmp_inaddrmasks
+        - icmp_inaddrmaskreps
+        - icmp_outmsgs
+        - icmp_outerrors
+        - icmp_outdestunreachs
+        - icmp_outtimeexcds
+        - icmp_outparmprobs
+        - icmp_outsrcquenchs
+        - icmp_outredirects
+        - icmp_outechos
+        - icmp_outechoreps
+        - icmp_outtimestamps
+        - icmp_outtimestampreps
+        - icmp_outaddrmasks
+        - icmp_outaddrmaskreps
+    description: Parse ICMP Row from /proc/net/snmp
+    groupId: jNjqie
+  - id: serde
+    filter: command=='cat_proc_net_snmp' && __Tcp
+    disabled: null
+    conf:
+      mode: extract
+      type: delim
+      delimChar: " "
+      quoteChar: '"'
+      escapeChar: \
+      nullValue: "-"
+      srcField: __Tcp
+      fields:
+        - tcp_rtoalgorithm
+        - tcp_rtomin
+        - tcp_rtomax
+        - tcp_maxconn
+        - tcp_activeopens
+        - tcp_passiveopens
+        - tcp_attemptfails
+        - tcp_estabresets
+        - tcp_currestab
+        - tcp_insegs
+        - tcp_outsegs
+        - tcp_retranssegs
+        - tcp_inerrs
+        - tcp_outrsts
+        - tcp_incsumerrors
+    description: Parse TCP Row from /proc/net/snmp
+    groupId: jNjqie
+  - id: serde
+    filter: command=='cat_proc_net_snmp' && __Udp
+    disabled: null
+    conf:
+      mode: extract
+      type: delim
+      delimChar: " "
+      quoteChar: '"'
+      escapeChar: \
+      nullValue: "-"
+      srcField: __Udp
+      fields:
+        - udp_indatagrams
+        - udp_noports
+        - udp_inerrors
+        - udp_outdatagrams
+        - udp_rcvbuferrors
+        - udp_sndbuferrors
+        - udp_incsumerrors
+        - udp_ignoredmulti
+    description: Parse UDP Row from /proc/net/snmp
+    groupId: jNjqie
+  - id: serde
+    filter: command=='cat_proc_net_snmp' && __UdpLite
+    disabled: null
+    conf:
+      mode: extract
+      type: delim
+      delimChar: " "
+      quoteChar: '"'
+      escapeChar: \
+      nullValue: "-"
+      srcField: __UdpLite
+      fields:
+        - udplite_indatagrams
+        - udplite_noports
+        - udplite_inerrors
+        - udplite_outdatagrams
+        - udplite_rcvbuferrors
+        - udplite_sndbuferrors
+        - udplite_incsumerrors
+        - udplite_ignoredmulti
+    description: Parse UDPLite Row from /proc/net/snmp
+    groupId: jNjqie
+  - id: regex_extract
+    filter: command=='cat_proc_net_dev'
+    disabled: null
+    conf:
+      source: _raw
+      iterations: 100
+      overwrite: false
+      regex: /\s*(?<interface>[\w\d]+):\s+(?<bytes_recv>\d+)\s+(?<packets_recv>\d+)\s+(?<err_in>\d+)\s+(?<drop_in>\d+)(?:\s+\d+){4}\s+(?<bytes_sent>\d+)\s+(?<packets_sent>\d+)\s+(?<err_out>\d+)\s+(?<drop_out>\d+)/g
+    description: Parse contents of /proc/net/dev
+  - id: regex_extract
+    filter: command.match(/cat_proc_net_(?:tcp|udp)/)
+    disabled: null
+    conf:
+      source: _raw
+      iterations: 100
+      overwrite: false
+      regex: /\s*\d+:(?:\s+[\w:]+){2}\s+(?<state>\w+)/
+    description: Parse contents of /proc/net/tcp, /proc/net/tcp6, /proc/net/udp, and
+      /proc/net/udp6
+  - id: regex_extract
+    filter: command=='cat_proc_net_netstat'
+    disabled: true
+    conf:
+      source: _raw
+      iterations: 100
+      overwrite: false
+      regex: /TcpExt:\s(?<__TcpExt>[^\n]+)\n(?=IpExt:)/
+      regexList:
+        - regex: /IpExt:\s(?<__IpExt>[^\n]+)\n?$/
+    description: Parse contents of /proc/net/netstat
+  - id: serde
+    filter: command=='cat_proc_net_netstat'
+    disabled: true
+    conf:
+      mode: extract
+      type: delim
+      delimChar: " "
+      quoteChar: '"'
+      escapeChar: \
+      nullValue: "-"
+      srcField: __TcpExt
+      fields:
+        - __SyncookiesSent
+        - __SyncookiesRecv
+        - __SyncookiesFailed
+        - __EmbryonicRsts
+        - __PruneCalled
+        - __RcvPruned
+        - __OfoPruned
+        - __OutOfWindowIcmps
+        - __LockDroppedIcmps
+        - __ArpFilter
+        - __TW
+        - __TWRecycled
+        - __TWKilled
+        - __PAWSActive
+        - __PAWSEstab
+        - __DelayedACKs
+        - __DelayedACKLocked
+        - __DelayedACKLost
+        - __ListenOverflows
+        - __ListenDrops
+        - __TCPHPHits
+        - TCPPureAcks
+        - TCPHPAcks
+        - __TCPRenoRecovery
+        - __TCPSackRecovery
+        - __TCPSACKReneging
+        - __TCPSACKReorder
+        - __TCPRenoReorder
+        - __TCPTSReorder
+        - __TCPFullUndo
+        - __TCPPartialUndo
+        - __TCPDSACKUndo
+        - __TCPLossUndo
+        - __TCPLostRetransmit
+        - __TCPRenoFailures
+        - __TCPSackFailures
+        - __TCPLossFailures
+        - __TCPFastRetrans
+        - __TCPSlowStartRetrans
+        - __TCPTimeouts
+        - TCPLossProbes
+        - __TCPLossProbeRecovery
+        - __TCPRenoRecoveryFail
+        - __TCPSackRecoveryFail
+        - __TCPRcvCollapsed
+        - TCPBacklogCoalesce
+        - __TCPDSACKOldSent
+        - __TCPDSACKOfoSent
+        - TCPDSACKRecv
+        - __TCPDSACKOfoRecv
+        - __TCPAbortOnData
+        - __TCPAbortOnClose
+        - __TCPAbortOnMemory
+        - __TCPAbortOnTimeout
+        - __TCPAbortOnLinger
+        - __TCPAbortFailed
+        - __TCPMemoryPressures
+        - __TCPMemoryPressuresChrono
+        - __TCPSACKDiscard
+        - __TCPDSACKIgnoredOld
+        - TCPDSACKIgnoredNoUndo
+        - __TCPSpuriousRTOs
+        - __TCPMD5NotFound
+        - __TCPMD5Unexpected
+        - __TCPMD5Failure
+        - __TCPSackShifted
+        - __TCPSackMerged
+        - __TCPSackShiftFallback
+        - __TCPBacklogDrop
+        - __PFMemallocDrop
+        - __TCPMinTTLDrop
+        - __TCPDeferAcceptDrop
+        - __IPReversePathFilter
+        - __TCPTimeWaitOverflow
+        - __TCPReqQFullDoCookies
+        - __TCPReqQFullDrop
+        - __TCPRetransFail
+        - __TCPRcvCoalesce
+        - __TCPOFOQueue
+        - __TCPOFODrop
+        - __TCPOFOMerge
+        - __TCPChallengeACK
+        - __TCPSYNChallenge
+        - __TCPFastOpenActive
+        - __TCPFastOpenActiveFail
+        - __TCPFastOpenPassive
+        - __TCPFastOpenPassiveFail
+        - __TCPFastOpenListenOverflow
+        - __TCPFastOpenCookieReqd
+        - __TCPFastOpenBlackhole
+        - __TCPSpuriousRtxHostQueues
+        - __BusyPollRxPackets
+        - TCPAutoCorking
+        - __TCPFromZeroWindowAdv
+        - __TCPToZeroWindowAdv
+        - __TCPWantZeroWindowAdv
+        - __TCPSynRetrans
+        - TCPOrigDataSent
+        - TCPHystartTrainDetect
+        - TCPHystartTrainCwnd
+        - __TCPHystartDelayDetect
+        - __TCPHystartDelayCwnd
+        - __TCPACKSkippedSynRecv
+        - __TCPACKSkippedPAWS
+        - __TCPACKSkippedSeq
+        - __TCPACKSkippedFinWait2
+        - __TCPACKSkippedTimeWait
+        - __TCPACKSkippedChallenge
+        - __TCPWinProbe
+        - __TCPKeepAlive
+        - __TCPMTUPFail
+        - __TCPMTUPSuccess
+        - TCPDelivered
+        - __TCPDeliveredCE
+        - __TCPAckCompressed
+        - __TCPZeroWindowDrop
+        - __TCPRcvQDrop
+        - __TCPWqueueTooBig
+        - __TCPFastOpenPassiveAltKey
+    description: Parse TCPExt fields
+  - id: serde
+    filter: command=='cat_proc_net_netstat'
+    disabled: true
+    conf:
+      mode: extract
+      type: delim
+      delimChar: " "
+      quoteChar: '"'
+      escapeChar: \
+      nullValue: "-"
+      srcField: __IPExt
+      fields:
+        - __InNoRoutes
+        - __InTruncatedPkts
+        - __InMcastPkts
+        - __OutMcastPkts
+        - __InBcastPkts
+        - __OutBcastPkts
+        - InOctets
+        - OutOctets
+        - __InMcastOctets
+        - __OutMcastOctets
+        - __InBcastOctets
+        - __OutBcastOctets
+        - __InCsumErrors
+        - InNoECTPkts
+        - __InECT1Pkts
+        - __InECT0Pkts
+        - __InCEPkts
+        - __ReasmOverlaps
+    description: Parse IPExt Fields
+  - id: numerify
+    filter: command
+    disabled: null
+    conf:
+      ignoreFields: []
+  - id: comment
+    filter: "true"
+    disabled: null
+    conf:
+      comment: >-
+        Calculating percentages based on algorithm from
+        https://stackoverflow.com/questions/23367857/accurate-calculation-of-cpu-usage-given-in-percentage-in-linux
+
+
+        PrevIdle = previdle + previowait
+
+        Idle = idle + iowait
+
+
+        PrevNonIdle = prevuser + prevnice + prevsystem + previrq + prevsoftirq + prevsteal
+
+        NonIdle = user + nice + system + irq + softirq + steal
+
+
+        PrevTotal = PrevIdle + PrevNonIdle
+
+        Total = Idle + NonIdle
+
+
+        # differentiate: actual value minus the previous one
+
+        totald = Total - PrevTotal
+
+        idled = Idle - PrevIdle
+
+
+        CPU_Percentage = (totald - idled)/totald
+  - id: eval
+    filter: command=='cat_proc_stat'
+    disabled: null
+    conf:
+      add:
+        - name: __prev_idle
+          value: cpu_idle[0] + cpu_iowait[0]
+        - name: __idle
+          value: cpu_idle[1] + cpu_iowait[1]
+        - name: __prev_nonidle
+          value: cpu_user[0] + cpu_nice[0] + cpu_system[0] + cpu_irq[0] +
+            cpu_softirq[0] + cpu_steal[0]
+        - name: __nonidle
+          value: cpu_user[1] + cpu_nice[1] + cpu_system[1] + cpu_irq[1] +
+            cpu_softirq[1] + cpu_steal[1]
+        - name: __prev_total
+          value: __prev_idle + __prev_nonidle
+        - name: __total
+          value: __idle + __nonidle
+        - name: __totald
+          value: __total - __prev_total
+        - name: __idled
+          value: __idle - __prev_idle
+        - name: __guest
+          value: cpu_guest[1] - cpu_guest[0]
+        - name: __guest_nice
+          value: cpu_nice[1] - cpu_nice[0]
+        - name: __iowait
+          value: cpu_iowait[1] - cpu_iowait[1]
+        - name: __irq
+          value: cpu_irq[1] - cpu_irq[0]
+        - name: __nice
+          value: cpu_nice[1] - cpu_nice[0]
+        - name: __softirq
+          value: cpu_softirq[1] - cpu_softirq[0]
+        - name: __steal
+          value: cpu_steal[1] - cpu_steal[0]
+        - name: __system
+          value: cpu_system[1] - cpu_system[0]
+        - name: __user
+          value: cpu_user[1] - cpu_user[0]
+        - name: cpu_perc
+          value: (__totald - __idled)/__totald*100
+        - name: cpu_idle
+          value: __idled/__totald*100
+        - name: cpu_guest
+          value: __guest/__totald*100
+        - name: cpu_guest_nice
+          value: __guest_nice/__totald*100
+        - name: cpu_iowait
+          value: __iowait/__totald*100
+        - name: cpu_irq
+          value: __irq/__totald*100
+        - name: cpu_nice
+          value: __nice/__totald*100
+        - name: cpu_softirq
+          value: __softirq/__totald*100
+        - name: cpu_steal
+          value: __steal/__totald*100
+        - name: cpu_system
+          value: __system/__totald*100
+        - name: cpu_user
+          value: __user/__totald*100
+        - name: uptime
+          value: Math.floor(Date.now()/1000 - boot_time)
+        - name: cpu
+          value: "'cpu-total'"
+    description: Set cpu values to diff of both values
+  - id: eval
+    filter: command=='cat_proc_diskstats'
+    disabled: false
+    conf:
+      add:
+        - name: read_bytes
+          value: sectors_read*512
+        - name: write_bytes
+          value: sectors_written*512
+  - id: eval
+    filter: command=='cat_proc_meminfo'
+    disabled: null
+    conf:
+      add:
+        - name: Active
+          value: Number(__Active)*1024
+        - name: Buffers
+          value: Number(__Buffers)*1024
+        - name: Cached
+          value: Number(__Cached)*1024
+        - name: CommitLimit
+          value: Number(__CommitLimit)*1024
+        - name: Committed_AS
+          value: Number(__Committed_AS)*1024
+        - name: Dirty
+          value: Number(__Dirty)
+        - name: HugePages_Free
+          value: Number(__HugePages_Free)
+        - name: HugePages_Total
+          value: Number(__HugePages_Total)
+        - name: Hugepagesize
+          value: Number(__Hugepagesize)*1024
+        - name: Inactive
+          value: Number(__Inactive)*1024
+        - name: Mapped
+          value: Number(__Mapped)*1024
+        - name: MemAvailable
+          value: Number(__MemAvailable)*1024
+        - name: MemFree
+          value: Number(__MemFree)*1024
+        - name: MemTotal
+          value: Number(__MemTotal)*1024
+        - name: MemAvailablePercent
+          value: MemAvailable/MemTotal*100
+        - name: MemUsed
+          value: MemTotal-MemFree-Buffers-Cached
+        - name: MemUsedPercent
+          value: MemUsed/MemTotal*100
+        - name: PageTables
+          value: Number(__PageTables)*1024
+        - name: Shmem
+          value: Number(__Shmem)*1024
+        - name: Slab
+          value: Number(__Slab)*1024
+        - name: SReclaimable
+          value: Number(__SReclaimable)*1024
+        - name: SUnreclaim
+          value: Number(__SUnreclaim)*1024
+        - name: SwapFree
+          value: Number(__SwapFree)*1024
+        - name: SwapTotal
+          value: Number(__SwapTotal)*1024
+        - name: SwapUsed
+          value: SwapTotal-SwapFree
+        - name: SwapUsedPercent
+          value: SwapUsed/SwapTotal*100
+        - name: VmallocChunk
+          value: Number(__VmallocChunk)*1024
+        - name: VmallocTotal
+          value: Number(__VmalloctTotal)*1024
+        - name: VmallocUsed
+          value: Number(__VmallocUsed)*1024
+        - name: Writeback
+          value: Number(__Writeback)*1024
+        - name: WritebackTmp
+          value: Number(__WritebackTmp)*1024
+    description: Rename used fields to non-internal names
+  - id: eval
+    filter: command=='cat_proc_vmstat'
+    disabled: null
+    conf:
+      add:
+        - name: swap_in
+          value: swap_in*4*1024
+        - name: swap_out
+          value: swap_out*4*1024
+    description: Bytes to Kilobytes for /proc/vmstat
+  - id: aggregation
+    filter: command=='cat_proc_n_stats'
+    disabled: false
+    conf:
+      passthrough: false
+      sufficientStatsOnly: false
+      metricsMode: true
+      timeWindow: 10s
+      aggregations:
+        - count(state).where(state=='R').as('processes.running')
+        - count(state).where(state=='S').as('processes.sleeping')
+        - count(state).where(state=='D').as('processes.blocked')
+        - count(state).where(state=='Z').as('processes.zombies')
+        - count(state).where(state=='X').as('processes.dead')
+        - count(state).where(state.toUpperCase()=='T').as('processes.stopped')
+        - count(state).where(state=='W').as('processes.paging')
+        - count(state).where(state=='I').as('processes.idle')
+        - count(state).where(state=='P').as('processes.parked')
+        - count().as('processes.total')
+        - sum(threads).as('processes.total_threads')
+      cumulative: false
+      groupbys:
+        - host
+        - command
+        - source
+        - sourcetype
+        - index
+        - commver
+    description: Aggregate /proc/pid/stat rows
+  - id: aggregation
+    filter: command.includes('cat_proc_net_tcp')
+    disabled: null
+    conf:
+      passthrough: false
+      sufficientStatsOnly: false
+      metricsMode: true
+      timeWindow: 10s
+      aggregations:
+        - count(state).where(state=='01').as('netstat.tcp_established')
+        - count(state).where(state=='02').as('netstat.tcp_syn_sent')
+        - count(state).where(state=='03').as('netstat.tcp_syn_recv')
+        - count(state).where(state=='04').as('netstat.tcp_fin_wait1')
+        - count(state).where(state=='05').as('netstat.tcp_fin_wait2')
+        - count(state).where(state=='06').as('netstat.tcp_time_wait')
+        - count(state).where(state=='07').as('netstat.tcp_close')
+        - count(state).where(state=='08').as('netstat.tcp_close_wait')
+        - count(state).where(state=='09').as('netstat.tcp_last_ack')
+        - count(state).where(state=='0A').as('netstat.tcp_listen')
+        - count(state).where(state=='0B').as('netstat.tcp_closing')
+      cumulative: false
+      groupbys:
+        - host
+        - command
+        - commver
+        - index
+        - source
+        - sourcetype
+    description: Group connections by status
+  - id: aggregation
+    filter: command.includes('cat_proc_net_udp')
+    disabled: null
+    conf:
+      passthrough: false
+      sufficientStatsOnly: false
+      metricsMode: true
+      timeWindow: 10s
+      aggregations:
+        - count().as('udp_socket')
+      cumulative: false
+      groupbys:
+        - command
+        - host
+        - source
+        - sourcetype
+        - index
+        - commver
+    description: Group connections by status
+  - id: publish_metrics
+    filter: "['df', 'cat_proc_stat', 'cat_proc_diskstats', 'cat_proc_meminfo',
+      'cat_proc_vmstat', 'cat_proc_loadavg',
+      'cat_proc_n_stats'].includes(command) && !__criblMetrics"
+    disabled: null
+    conf:
+      fields:
+        - metricType: gauge
+          inFieldName: free
+          outFieldExpr: "'disk.free'"
+        - metricType: gauge
+          inFieldName: total
+          outFieldExpr: "'disk.total'"
+        - metricType: gauge
+          inFieldName: used
+          outFieldExpr: "'disk.used'"
+        - metricType: gauge
+          inFieldName: used_percent
+          outFieldExpr: "'disk.used_percent'"
+        - metricType: gauge
+          inFieldName: inodes_free
+          outFieldExpr: "'disk.inodes_free'"
+        - metricType: gauge
+          inFieldName: inodes_total
+          outFieldExpr: "'disk.inodes_total'"
+        - metricType: gauge
+          inFieldName: inodes_used
+          outFieldExpr: "'disk.inodes_used'"
+        - metricType: gauge
+          inFieldName: inodes_used_percent
+          outFieldExpr: "'disk.inodes_used_percent'"
+        - metricType: gauge
+          inFieldName: boot_time
+          outFieldExpr: "'kernel.boot_time'"
+        - metricType: gauge
+          inFieldName: context_switches
+          outFieldExpr: "'kernel.context_switches'"
+        - metricType: gauge
+          inFieldName: interrupts
+          outFieldExpr: "'kernel.interrupts'"
+        - metricType: gauge
+          inFieldName: processes
+          outFieldExpr: "'kernel.processes_forked'"
+        - metricType: gauge
+          inFieldName: procs_blocked
+          outFieldExpr: "'kernel.processes_blocked'"
+        - metricType: gauge
+          inFieldName: procs_running
+          outFieldExpr: "'kernel.processes_running'"
+        - metricType: gauge
+          inFieldName: cpu_idle
+          outFieldExpr: "'cpu.usage_idle'"
+        - metricType: gauge
+          inFieldName: cpu_irq
+          outFieldExpr: "'cpu.usage_irq'"
+        - metricType: gauge
+          inFieldName: cpu_nice
+          outFieldExpr: "'cpu.usage_nice'"
+        - metricType: gauge
+          inFieldName: cpu_softirq
+          outFieldExpr: "'cpu.usage_softirq'"
+        - metricType: gauge
+          inFieldName: cpu_steal
+          outFieldExpr: "'cpu.usage_steal'"
+        - metricType: gauge
+          inFieldName: cpu_system
+          outFieldExpr: "'cpu.usage_system'"
+        - metricType: gauge
+          inFieldName: cpu_user
+          outFieldExpr: "'cpu.usage_user'"
+        - metricType: gauge
+          inFieldName: cpu_iowait
+          outFieldExpr: "'cpu.usage_iowait'"
+        - metricType: gauge
+          inFieldName: uptime
+          outFieldExpr: "'system.uptime'"
+        - metricType: gauge
+          inFieldName: cpu_perc
+          outFieldExpr: "'cpu.usage_total'"
+        - metricType: gauge
+          inFieldName: cpu_guest
+          outFieldExpr: "'cpu.usage_guest'"
+        - metricType: gauge
+          inFieldName: cpu_guest_nice
+          outFieldExpr: "'cpu.usage_guest_nice'"
+        - metricType: gauge
+          inFieldName: io_time
+          outFieldExpr: "'diskio.io_time'"
+        - metricType: gauge
+          inFieldName: iops_in_progress
+          outFieldExpr: "'diskio.iops_in_progress'"
+        - metricType: gauge
+          inFieldName: merged_reads
+          outFieldExpr: "'diskio.merged_reads'"
+        - metricType: gauge
+          inFieldName: merged_writes
+          outFieldExpr: "'diskio.merged_writes'"
+        - metricType: gauge
+          inFieldName: read_time
+          outFieldExpr: "'diskio.read_time'"
+        - metricType: gauge
+          inFieldName: reads
+          outFieldExpr: "'diskio.reads'"
+        - metricType: gauge
+          inFieldName: sectors_read
+          outFieldExpr: "'diskio.sectors_read'"
+        - metricType: gauge
+          inFieldName: sectors_written
+          outFieldExpr: "'diskio.sectors_written'"
+        - metricType: gauge
+          inFieldName: weighted_io_time
+          outFieldExpr: "'diskio.weighted_io_time'"
+        - metricType: gauge
+          inFieldName: write_time
+          outFieldExpr: "'diskio.write_time'"
+        - metricType: gauge
+          inFieldName: writes
+          outFieldExpr: "'diskio.writes'"
+        - metricType: gauge
+          inFieldName: read_bytes
+          outFieldExpr: "'diskio.read_bytes'"
+        - metricType: gauge
+          inFieldName: write_bytes
+          outFieldExpr: "'diskio.write_bytes'"
+        - metricType: gauge
+          inFieldName: Active
+          outFieldExpr: "'mem.active'"
+        - metricType: gauge
+          inFieldName: MemAvailable
+          outFieldExpr: "'mem.available'"
+        - metricType: gauge
+          inFieldName: MemAvailablePercent
+          outFieldExpr: "'mem.available_percent'"
+        - metricType: gauge
+          inFieldName: Buffers
+          outFieldExpr: "'mem.buffered'"
+        - metricType: gauge
+          inFieldName: Cached
+          outFieldExpr: "'mem.cached'"
+        - metricType: gauge
+          inFieldName: CommitLimit
+          outFieldExpr: "'mem.commit_limit'"
+        - metricType: gauge
+          inFieldName: Committed_AS
+          outFieldExpr: "'mem.commited_as'"
+        - metricType: gauge
+          inFieldName: Dirty
+          outFieldExpr: "'mem.dirty'"
+        - metricType: gauge
+          inFieldName: MemFree
+          outFieldExpr: "'mem.free'"
+        - metricType: gauge
+          inFieldName: Hugepagesize
+          outFieldExpr: "'mem.huge_page_size'"
+        - metricType: gauge
+          inFieldName: HugePages_Free
+          outFieldExpr: "'mem.huge_pages_free'"
+        - metricType: gauge
+          inFieldName: HugePages_Total
+          outFieldExpr: "'mem.huge_pages_total'"
+        - metricType: gauge
+          inFieldName: Inactive
+          outFieldExpr: "'mem.inactive'"
+        - metricType: gauge
+          inFieldName: Mapped
+          outFieldExpr: "'mem.mapped'"
+        - metricType: gauge
+          inFieldName: PageTables
+          outFieldExpr: "'mem.page_tables'"
+        - metricType: gauge
+          inFieldName: Shmem
+          outFieldExpr: "'mem.shared'"
+        - metricType: gauge
+          inFieldName: Slab
+          outFieldExpr: "'mem.slab'"
+        - metricType: gauge
+          inFieldName: SReclaimable
+          outFieldExpr: "'mem.sreclaimable'"
+        - metricType: gauge
+          inFieldName: SUnreclaim
+          outFieldExpr: "'mem.sunreclaim'"
+        - metricType: gauge
+          inFieldName: SwapFree
+          outFieldExpr: "'mem.swap_free'"
+        - metricType: gauge
+          inFieldName: SwapTotal
+          outFieldExpr: "'mem.swap_total'"
+        - metricType: gauge
+          inFieldName: MemTotal
+          outFieldExpr: "'mem.total'"
+        - metricType: gauge
+          inFieldName: MemUsed
+          outFieldExpr: "'mem.used'"
+        - metricType: gauge
+          inFieldName: MemUsedPercent
+          outFieldExpr: "'mem.used_percent'"
+        - metricType: gauge
+          inFieldName: VmallocChunk
+          outFieldExpr: "'mem.vmalloc_chunk'"
+        - metricType: gauge
+          inFieldName: VmallocTotal
+          outFieldExpr: "'mem.vmalloc_total'"
+        - metricType: gauge
+          inFieldName: VmallocUsed
+          outFieldExpr: "'mem.vmalloc_used'"
+        - metricType: gauge
+          inFieldName: Writeback
+          outFieldExpr: "'mem.write_back'"
+        - metricType: gauge
+          inFieldName: WritebackTmp
+          outFieldExpr: "'mem.write_back_tmp'"
+        - metricType: gauge
+          inFieldName: SwapFree
+          outFieldExpr: "'swap.free'"
+        - metricType: gauge
+          inFieldName: SwapTotal
+          outFieldExpr: "'swap.total'"
+        - metricType: gauge
+          inFieldName: SwapUsed
+          outFieldExpr: "'swap.used'"
+        - metricType: gauge
+          inFieldName: SwapUsedPercent
+          outFieldExpr: "'swap.used_percent'"
+        - metricType: counter
+          inFieldName: swap_in
+          outFieldExpr: "'swap.in'"
+        - metricType: counter
+          inFieldName: swap_out
+          outFieldExpr: "'swap.out'"
+        - metricType: gauge
+          inFieldName: load1
+          outFieldExpr: "'system.load1'"
+        - metricType: gauge
+          inFieldName: load5
+          outFieldExpr: "'system.load5'"
+        - metricType: gauge
+          inFieldName: load15
+          outFieldExpr: "'system.load15'"
+      dimensions:
+        - "!_*"
+        - "*"
+      overwrite: false
+    description: Publish metrics for /proc/loadavg
+  - id: publish_metrics
+    filter: command=='cat_proc_net_snmp'
+    disabled: null
+    conf:
+      fields:
+        - metricType: gauge
+          inFieldName: ip_forwarding
+          outFieldExpr: "'net.ip_forwarding'"
+        - metricType: gauge
+          inFieldName: ip_defaultttl
+          outFieldExpr: "'net.ip_defaultttl'"
+        - metricType: counter
+          inFieldName: ip_inreceives
+          outFieldExpr: "'net.ip_inreceives'"
+        - metricType: counter
+          inFieldName: ip_inhdrerrors
+          outFieldExpr: "'net.ip_inhdrerrors'"
+        - metricType: counter
+          inFieldName: ip_inaddrerrors
+          outFieldExpr: "'net.ip_inaddrerrors'"
+        - metricType: counter
+          inFieldName: ip_forwdatagrams
+          outFieldExpr: "'net.ip_forwdatagrams'"
+        - metricType: counter
+          inFieldName: ip_inunknownprotos
+          outFieldExpr: "'net.ip_inunknownprotos'"
+        - metricType: counter
+          inFieldName: ip_indiscards
+          outFieldExpr: "'net.ip_indiscards'"
+        - metricType: counter
+          inFieldName: ip_indelivers
+          outFieldExpr: "'net.ip_indelivers'"
+        - metricType: counter
+          inFieldName: ip_outrequests
+          outFieldExpr: "'net.ip_outrequests'"
+        - metricType: counter
+          inFieldName: ip_outdiscards
+          outFieldExpr: "'net.ip_outdiscards'"
+        - metricType: counter
+          inFieldName: ip_outnoroutes
+          outFieldExpr: "'net.ip_outnoroutes'"
+        - metricType: counter
+          inFieldName: ip_reasmtimeout
+          outFieldExpr: "'net.ip_reasmtimeout'"
+        - metricType: counter
+          inFieldName: ip_reasmreqds
+          outFieldExpr: "'net.ip_reasmreqds'"
+        - metricType: counter
+          inFieldName: ip_reasmoks
+          outFieldExpr: "'net.ip_reasmoks'"
+        - metricType: counter
+          inFieldName: ip_reasmfails
+          outFieldExpr: "'net.ip_reasmfails'"
+        - metricType: counter
+          inFieldName: ip_fragoks
+          outFieldExpr: "'net.ip_fragoks'"
+        - metricType: counter
+          inFieldName: ip_fragfails
+          outFieldExpr: "'net.ip_fragfails'"
+        - metricType: counter
+          inFieldName: ip_fragcreates
+          outFieldExpr: "'net.ip_fragcreates'"
+        - metricType: counter
+          inFieldName: icmp_inmsgs
+          outFieldExpr: "'net.icmp_inmsgs'"
+        - metricType: counter
+          inFieldName: icmp_inerrors
+          outFieldExpr: "'net.icmp_inerrors'"
+        - metricType: counter
+          inFieldName: icmp_incsumerrors
+          outFieldExpr: "'net.icmp_incsumerrors'"
+        - metricType: counter
+          inFieldName: icmp_indestunreachs
+          outFieldExpr: "'net.icmp_indestunreachs'"
+        - metricType: counter
+          inFieldName: icmp_intimeexcds
+          outFieldExpr: "'net.icmp_intimeexcds'"
+        - metricType: counter
+          inFieldName: icmp_inparmprobs
+          outFieldExpr: "'net.icmp_inparmprobs'"
+        - metricType: counter
+          inFieldName: icmp_insrcquenchs
+          outFieldExpr: "'net.icmp_insrcquenchs'"
+        - metricType: counter
+          inFieldName: icmp_inredirects
+          outFieldExpr: "'net.icmp_inredirects'"
+        - metricType: counter
+          inFieldName: icmp_inechos
+          outFieldExpr: "'net.icmp_inechos'"
+        - metricType: counter
+          inFieldName: icmp_inechoreps
+          outFieldExpr: "'net.icmp_inechoreps'"
+        - metricType: counter
+          inFieldName: icmp_intimestamps
+          outFieldExpr: "'net.icmp_intimestamps'"
+        - metricType: counter
+          inFieldName: icmp_intimestampreps
+          outFieldExpr: "'net.icmp_intimestampreps'"
+        - metricType: counter
+          inFieldName: icmp_inaddrmasks
+          outFieldExpr: "'net.icmp_inaddrmasks'"
+        - metricType: counter
+          inFieldName: icmp_inaddrmaskreps
+          outFieldExpr: "'net.icmp_inaddrmaskreps'"
+        - metricType: counter
+          inFieldName: icmp_outmsgs
+          outFieldExpr: "'net.icmp_outmsgs'"
+        - metricType: counter
+          inFieldName: icmp_outerrors
+          outFieldExpr: "'net.icmp_outerrors'"
+        - metricType: counter
+          inFieldName: icmp_outdestunreachs
+          outFieldExpr: "'net.icmp_outdestunreachs'"
+        - metricType: counter
+          inFieldName: icmp_outtimeexcds
+          outFieldExpr: "'net.icmp_outtimeexcds'"
+        - metricType: counter
+          inFieldName: icmp_outparmprobs
+          outFieldExpr: "'net.icmp_outparmprobs'"
+        - metricType: counter
+          inFieldName: icmp_outsrcquenchs
+          outFieldExpr: "'net.icmp_outsrcquenchs'"
+        - metricType: counter
+          inFieldName: icmp_outredirects
+          outFieldExpr: "'net.icmp_outredirects'"
+        - metricType: counter
+          inFieldName: icmp_outechos
+          outFieldExpr: "'net.icmp_outechos'"
+        - metricType: counter
+          inFieldName: icmp_outechoreps
+          outFieldExpr: "'net.icmp_outechoreps'"
+        - metricType: counter
+          inFieldName: icmp_outtimestamps
+          outFieldExpr: "'net.icmp_outtimestamps'"
+        - metricType: counter
+          inFieldName: icmp_outtimestampreps
+          outFieldExpr: "'net.icmp_outtimestampreps'"
+        - metricType: counter
+          inFieldName: icmp_outaddrmasks
+          outFieldExpr: "'net.icmp_outaddrmasks'"
+        - metricType: counter
+          inFieldName: icmp_outaddrmaskreps
+          outFieldExpr: "'net.icmp_outaddrmaskreps'"
+        - metricType: gauge
+          inFieldName: tcp_rtoalgorithm
+          outFieldExpr: "'net.tcp_rtoalgorithm'"
+        - metricType: gauge
+          inFieldName: tcp_rtomin
+          outFieldExpr: "'net.tcp_rtomin'"
+        - metricType: gauge
+          inFieldName: tcp_rtomax
+          outFieldExpr: "'net.tcp_rtomax'"
+        - metricType: gauge
+          inFieldName: tcp_maxconn
+          outFieldExpr: "'net.tcp_maxconn'"
+        - metricType: gauge
+          inFieldName: tcp_activeopens
+          outFieldExpr: "'net.tcp_activeopens'"
+        - metricType: gauge
+          inFieldName: tcp_passiveopens
+          outFieldExpr: "'net.tcp_passiveopens'"
+        - metricType: counter
+          inFieldName: tcp_attemptfails
+          outFieldExpr: "'net.tcp_attemptfails'"
+        - metricType: counter
+          inFieldName: tcp_estabresets
+          outFieldExpr: "'net.tcp_estabresets'"
+        - metricType: counter
+          inFieldName: tcp_currestab
+          outFieldExpr: "'net.tcp_currestab'"
+        - metricType: counter
+          inFieldName: tcp_insegs
+          outFieldExpr: "'net.tcp_insegs'"
+        - metricType: counter
+          inFieldName: tcp_outsegs
+          outFieldExpr: "'net.tcp_outsegs'"
+        - metricType: counter
+          inFieldName: tcp_retranssegs
+          outFieldExpr: "'net.tcp_retranssegs'"
+        - metricType: counter
+          inFieldName: tcp_inerrs
+          outFieldExpr: "'net.tcp_inerrs'"
+        - metricType: counter
+          inFieldName: tcp_outrsts
+          outFieldExpr: "'net.tcp_outrsts'"
+        - metricType: counter
+          inFieldName: tcp_incsumerrors
+          outFieldExpr: "'net.tcp_incsumerrors'"
+        - metricType: counter
+          inFieldName: udp_indatagrams
+          outFieldExpr: "'net.udp_indatagrams'"
+        - metricType: counter
+          inFieldName: udp_noports
+          outFieldExpr: "'net.udp_noports'"
+        - metricType: counter
+          inFieldName: udp_inerrors
+          outFieldExpr: "'net.udp_inerrors'"
+        - metricType: counter
+          inFieldName: udp_outdatagrams
+          outFieldExpr: "'net.udp_outdatagrams'"
+        - metricType: counter
+          inFieldName: udp_rcvbuferrors
+          outFieldExpr: "'net.udp_rcvbuferrors'"
+        - metricType: counter
+          inFieldName: udp_sndbuferrors
+          outFieldExpr: "'net.udp_sndbuferrors'"
+        - metricType: counter
+          inFieldName: udp_incsumerrors
+          outFieldExpr: "'net.udp_incsumerrors'"
+        - metricType: counter
+          inFieldName: udp_ignoredmulti
+          outFieldExpr: "'net.udp_ignoredmulti'"
+        - metricType: counter
+          inFieldName: udplite_indatagrams
+          outFieldExpr: "'net.udplite_indatagrams'"
+        - metricType: counter
+          inFieldName: udplite_noports
+          outFieldExpr: "'net.udplite_noports'"
+        - metricType: counter
+          inFieldName: udplite_inerrors
+          outFieldExpr: "'net.udplite_inerrors'"
+        - metricType: counter
+          inFieldName: udplite_outdatagrams
+          outFieldExpr: "'net.udplite_outdatagrams'"
+        - metricType: counter
+          inFieldName: udplite_rcvbuferrors
+          outFieldExpr: "'net.udplite_rcvbuferrors'"
+        - metricType: counter
+          inFieldName: udplite_sndbuferrors
+          outFieldExpr: "'net.udplite_sndbuferrors'"
+        - metricType: counter
+          inFieldName: udplite_incsumerrors
+          outFieldExpr: "'net.udplite_incsumerrors'"
+        - metricType: counter
+          inFieldName: udplite_ignoredmulti
+          outFieldExpr: "'net.udplite_ignoredmulti'"
+      dimensions:
+        - "!_*"
+        - "*"
+      overwrite: false
+    description: Public Metrics from Network
+  - id: publish_metrics
+    filter: command=='cat_proc_net_dev'
+    disabled: null
+    conf:
+      fields:
+        - metricType: counter
+          inFieldName: bytes_recv
+          outFieldExpr: "'net.bytes_recv'"
+        - metricType: counter
+          inFieldName: bytes_sent
+          outFieldExpr: "'net.bytes_sent'"
+        - metricType: counter
+          inFieldName: drop_in
+          outFieldExpr: "'net.drop_in'"
+        - metricType: counter
+          inFieldName: drop_out
+          outFieldExpr: "'net.drop_out'"
+        - metricType: counter
+          inFieldName: err_in
+          outFieldExpr: "'net.err_in'"
+        - metricType: counter
+          inFieldName: err_out
+          outFieldExpr: "'net.err_out'"
+        - metricType: counter
+          inFieldName: packets_recv
+          outFieldExpr: "'net.packets_recv'"
+        - metricType: gauge
+          inFieldName: packets_sent
+          outFieldExpr: "'net.packets_sent'"
+      dimensions:
+        - "!_*"
+        - "*"
+      overwrite: false
+    description: Publish Metrics for Proc Net Dev

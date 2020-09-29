@@ -3,7 +3,7 @@ const agentOpts = { keepAlive: true, maxSockets: 10 };
 const agent = http.Agent(agentOpts);
 
 function lookup() {
-    const u = 'http://localhost:3000/users/mwilde';
+    const u = 'http://localhost:4000/users/mwilde';
     return new Promise((resolve, reject) => {
         http.get(u, { agent }, (resp) => {
           let data = '';
